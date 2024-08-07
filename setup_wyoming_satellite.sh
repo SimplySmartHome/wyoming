@@ -145,8 +145,8 @@ After=network-online.target
 
 [Service]
 Type=simple
-ExecStart=$HOME/wyoming-satellite/script/run --name \"${SATELLITE_NAME}\" --uri \"tcp://0.0.0.0:10700\" --mic-command \"arecord -D '${MIC_DEVICE}' -r 16000 -c 1 -f S16_LE -t raw\" --snd-command \"aplay -D '${SND_DEVICE}' -r 22050 -c 1 -f S16_LE -t raw\"
-WorkingDirectory=$HOME/wyoming-satellite
+ExecStart=$SATELLITE_DIR/script/run --name \"${SATELLITE_NAME}\" --uri \"tcp://0.0.0.0:10700\" --mic-command \"arecord -D '${MIC_DEVICE}' -r 16000 -c 1 -f S16_LE -t raw\" --snd-command \"aplay -D '${SND_DEVICE}' -r 22050 -c 1 -f S16_LE -t raw\"
+WorkingDirectory=$SATELLITE_DIR
 Restart=always
 RestartSec=1
 
@@ -223,8 +223,8 @@ Requires=wyoming-openwakeword.service
 
 [Service]
 Type=simple
-ExecStart=$HOME/wyoming-satellite/script/run --name \"${SATELLITE_NAME}\" --uri \"tcp://0.0.0.0:10700\" --mic-command \"arecord -D '${MIC_DEVICE}' -r 16000 -c 1 -f S16_LE -t raw\" --snd-command \"aplay -D '${SND_DEVICE}' -r 22050 -c 1 -f S16_LE -t raw\" --wake-uri \"tcp://127.0.0.1:10400\" --wake-word-name \"${WAKE_WORD_NAME}\"
-WorkingDirectory=$HOME/wyoming-satellite
+ExecStart=$SATELLITE_DIR/script/run --name \"${SATELLITE_NAME}\" --uri \"tcp://0.0.0.0:10700\" --mic-command \"arecord -D '${MIC_DEVICE}' -r 16000 -c 1 -f S16_LE -t raw\" --snd-command \"aplay -D '${SND_DEVICE}' -r 22050 -c 1 -f S16_LE -t raw\" --wake-uri \"tcp://127.0.0.1:10400\" --wake-word-name \"${WAKE_WORD_NAME}\"
+WorkingDirectory=$SATELLITE_DIR
 Restart=always
 RestartSec=1
 

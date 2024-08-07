@@ -2,9 +2,9 @@
 
 # Variables
 REPO_URL="https://github.com/rhasspy/wyoming-satellite.git"
-SATELLITE_DIR="/home/pi/wyoming-satellite"
+SATELLITE_DIR="$HOME/wyoming-satellite"
 VENV_DIR="${SATELLITE_DIR}/.venv"
-STATE_FILE="/home/pi/setup_state.txt"
+STATE_FILE="$HOME/setup_state.txt"
 
 log_message() {
   echo "====================================================================="
@@ -225,8 +225,3 @@ if [ "$state" -lt "18" ]; then
   check_error "Failed to restart wyoming-satellite service"
   save_state 18
 fi
-
-if [ "$state" -lt "19" ]; then
-  log_message "Step 16: Installing and configuring LED service for 2Mic HAT..."
-  cd ${SATELLITE_DIR}/examples
-  python3 -m venv --Here's the complete script with state-saving and resuming functionality. It will resume from where it left off after a reboot:

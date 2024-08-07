@@ -35,19 +35,19 @@ load_state() {
   if [ -f "$STATE_FILE" ]; then
     source "$STATE_FILE"
   else
-    state="0"
+    state=0
   fi
 }
 
 load_state
 
-if [ "$state" -eq "5" ]; then
+if [ "$state" -eq 5 ]; then
   log_message "Reconnecting after reboot..."
   state=6  # Move to the next state after reboot
   save_state $state
 fi
 
-if [ "$state" -lt "1" ]; then
+if [ "$state" -lt 1 ]; then
   read -p "Enter the satellite name (e.g., my satellite): " SATELLITE_NAME
   echo "Choose the wake word (type the number):"
   echo "1) ok_nabu"
@@ -69,7 +69,7 @@ if [ "$state" -lt "1" ]; then
   save_variables
 fi
 
-if [ "$state" -lt "2" ]; then
+if [ "$state" -lt 2 ]; then
   log_message "Step 1: Installing required packages..."
   sudo apt-get update && sudo apt-get install -y git python3-venv libopenblas-dev python3-spidev python3-gpiozero
   check_error "Failed to install required packages"
@@ -77,7 +77,7 @@ if [ "$state" -lt "2" ]; then
   save_state $state
 fi
 
-if [ "$state" -lt "3" ]; then
+if [ "$state" -lt 3 ]; then
   log_message "Step 2: Cloning the wyoming-satellite repository..."
   git clone $REPO_URL $SATELLITE_DIR
   check_error "Failed to clone the repository"
@@ -85,7 +85,7 @@ if [ "$state" -lt "3" ]; then
   save_state $state
 fi
 
-if [ "$state" -lt "4" ]; then
+if [ "$state" -lt 4]; then
   log_message "Step 3: Installing ReSpeaker 2Mic HAT drivers..."
   cd $SATELLITE_DIR
   sudo bash etc/install-respeaker-drivers.sh
@@ -94,7 +94,7 @@ if [ "$state" -lt "4" ]; then
   save_state $state
 fi
 
-if [ "$state" -lt "5" ]; then
+if [ "$state" -lt 5 ]; then
   log_message "Step 4: Rebooting the system to apply changes..."
   state=5
   save_state $state
@@ -103,13 +103,13 @@ if [ "$state" -lt "5" ]; then
   sudo reboot now
 fi
 
-if [ "$state" -eq "6" ]; then
+if [ "$state" -eq 6 ]; then
   log_message "Reconnecting after reboot..."
   state=7  # Move to the next state after reboot
   save_state $state
 fi
 
-if [ "$state" -lt "7" ]; then
+if [ "$state" -lt 7 ]; then
   log_message "Step 5: Creating and activating a Python virtual environment..."
   cd $SATELLITE_DIR
   python3 -m venv $VENV_DIR
@@ -124,7 +124,7 @@ if [ "$state" -lt "7" ]; then
   save_state $state
 fi
 
-if [ "$state" -lt "8" ]; then
+if [ "$state" -lt 8 ]; then
   log_message "Step 6: Testing audio devices..."
   log_message "Listing available recording devices:"
   arecord -L
@@ -140,7 +140,7 @@ if [ "$state" -lt "8" ]; then
   save_variables
 fi
 
-if [ "$state" -lt "9" ]; then
+if [ "$state" -lt 9 ]; then
   log_message "Step 7: Testing recording and playback..."
   read -p "Press Enter to start recording..."
   arecord -D $MIC_DEVICE -r 16000 -c 1 -f S16_LE -t wav -d 5 test.wav
@@ -152,7 +152,7 @@ if [ "$state" -lt "9" ]; then
   save_state $state
 fi
 
-if [ "$state" -lt "10" ]; then
+if [ "$state" -lt 10 ]; then
   log_message "Step 8: Creating systemd service for wyoming-satellite..."
   sudo bash -c "cat << EOF > /etc/systemd/system/wyoming-satellite.service
 [Unit]
@@ -175,7 +175,7 @@ EOF"
   save_state $state
 fi
 
-if [ "$state" -lt "11" ]; then
+if [ "$state" -lt 11 ]; then
   log_message "Step 9: Enabling and starting the wyoming-satellite service..."
   sudo systemctl enable wyoming-satellite.service
   check_error "Failed to enable wyoming-satellite service"
@@ -186,7 +186,7 @@ if [ "$state" -lt "11" ]; then
   save_state $state
 fi
 
-if [ "$state" -lt "12" ]; then
+if [ "$state" -lt 12 ]; then
   log_message "Step 10: Installing and configuring openWakeWord..."
   cd ~
   git clone https://github.com/rhasspy/wyoming-openwakeword.git
@@ -195,7 +195,7 @@ if [ "$state" -lt "12" ]; then
   save_state $state
 fi
 
-if [ "$state" -lt "13" ]; then
+if [ "$state" -lt 13 ]; then
   cd wyoming-openwakeword
   script/setup
   check_error "Failed to set up openWakeWord"
@@ -203,7 +203,7 @@ if [ "$state" -lt "13" ]; then
   save_state $state
 fi
 
-if [ "$state" -lt "14" ]; then
+if [ "$state" -lt 14 ]; then
   log_message "Step 11: Creating systemd service for openWakeWord..."
   sudo bash -c "cat << EOF > /etc/systemd/system/wyoming-openwakeword.service
 [Unit]
@@ -224,7 +224,7 @@ EOF"
   save_state $state
 fi
 
-if [ "$state" -lt "15" ]; then
+if [ "$state" -lt 15 ]; then
   log_message "Step 12: Enabling and starting the openWakeWord service..."
   sudo systemctl enable wyoming-openwakeword.service
   check_error "Failed to enable openWakeWord service"
@@ -235,7 +235,7 @@ if [ "$state" -lt "15" ]; then
   save_state $state
 fi
 
-if [ "$state" -lt "16" ]; then
+if [ "$state" -lt 16 ]; then
   log_message "Step 13: Updating wyoming-satellite service to include wake word detection..."
   sudo bash -c "cat << EOF > /etc/systemd/system/wyoming-satellite.service
 [Unit]
@@ -259,7 +259,7 @@ EOF"
   save_state $state
 fi
 
-if [ "$state" -lt "17" ]; then
+if [ "$state" -lt 17 ]; then
   log_message "Step 14: Creating LED service..."
   sudo bash -c "cat << EOF > /etc/systemd/system/wyoming-led.service
 [Unit]
@@ -282,7 +282,7 @@ EOF"
   save_state $state
 fi
 
-if [ "$state" -lt "18" ]; then
+if [ "$state" -lt 18 ]; then
   log_message "Step 15: Enabling and starting the LED service..."
   sudo systemctl enable wyoming-led.service
   check_error "Failed to enable LED service"

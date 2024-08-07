@@ -73,6 +73,7 @@ fi
 
 if [ "$state" -eq "6" ]; then
   log_message "Reconnecting after reboot..."
+  save_state 7  # Move to the next state after reboot
   exit 0  # Exit the script to allow SSH reconnection
 fi
 
@@ -223,5 +224,4 @@ if [ "$state" -lt "18" ]; then
 
   sudo systemctl restart wyoming-satellite.service
   check_error "Failed to restart wyoming-satellite service"
-  save_state 18
-fi
+  save_state 18Here is the complete script, adjusted to resume properly after reboot:

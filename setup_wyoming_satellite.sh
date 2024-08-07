@@ -7,12 +7,12 @@ VENV_DIR="${SATELLITE_DIR}/.venv"
 STATE_FILE="$HOME/setup_state.txt"
 
 log_message() {
-  zenity --info --text="$1" --width=400 --height=200
+  whiptail --msgbox "$1" 20 60
 }
 
 check_error() {
   if [ $? -ne 0 ]; then
-    zenity --error --text="Error: $1" --width=400 --height=200
+    whiptail --msgbox "Error: $1" 20 60
     exit 1
   fi
 }
@@ -32,14 +32,19 @@ load_state() {
 state=$(load_state)
 
 if [ "$state" -lt "1" ]; then
-  sudo apt-get install -y zenity
-  check_error "Failed to install Zenity"
+  sudo apt-get install -y whiptail
+  check_error "Failed to install Whiptail"
   save_state 1
 fi
 
 if [ "$state" -lt "2" ]; then
-  SATELLITE_NAME=$(zenity --entry --title="Satellite Name" --text="Enter the satellite name (e.g., my satellite):")
-  WAKE_WORD_NAME=$(zenity --list --title="Wake Word Name" --text="Choose the wake word:" --column="Wake Word" "ok_nabu" "hey_jarvis" "alexa" "hey_mycroft" "hey_rhasspy")
+  SATELLITE_NAME=$(whiptail --inputbox "Enter the satellite name (e.g., my satellite):" 20 60 3>&1 1>&2 2>&3)
+  WAKE_WORD_NAME=$(whiptail --menu "Choose the wake word:" 20 60 10 \
+    "ok_nabu" "" \
+    "hey_jarvis" "" \
+    "alexa" "" \
+    "hey_mycroft" "" \
+    "hey_rhasspy" "" 3>&1 1>&2 2>&3)
   save_state 2
 
   log_message "Step 2: Updating and upgrading the system..."
@@ -102,14 +107,14 @@ if [ "$state" -lt "10" ]; then
   MIC_DEVICES=$(arecord -L)
   check_error "Failed to list audio recording devices"
 
-  MIC_DEVICE=$(echo "$MIC_DEVICES" | zenity --list --title="Select Microphone Device" --column="Devices" --height=400 --width=600)
+  MIC_DEVICE=$(echo "$MIC_DEVICES" | whiptail --menu "Select Microphone Device" 20 60 10 3>&1 1>&2 2>&3)
   check_error "Failed to select microphone device"
 
   log_message "Listing available playback devices:"
   SND_DEVICES=$(aplay -L)
   check_error "Failed to list audio playback devices"
 
-  SND_DEVICE=$(echo "$SND_DEVICES" | zenity --list --title="Select Speaker Device" --column="Devices" --height=400 --width=600)
+  SND_DEVICE=$(echo "$SND_DEVICES" | whiptail --menu "Select Speaker Device" 20 60 10 3>&1 1>&2 2>&3)
   check_error "Failed to select speaker device"
 
   save_state 10
@@ -117,7 +122,7 @@ fi
 
 if [ "$state" -lt "11" ]; then
   log_message "Step 9: Testing recording and playback..."
-  zenity --info --text="Press OK to start recording..." --width=400 --height=200
+  whiptail --msgbox "Press OK to start recording..." 20 60
   arecord -D $MIC_DEVICE -r 16000 -c 1 -f S16_LE -t wav -d 5 test.wav
   check_error "Failed to record audio"
 

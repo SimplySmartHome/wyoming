@@ -162,7 +162,7 @@ After=network-online.target
 
 [Service]
 Type=simple
-ExecStart=$SATELLITE_DIR/script/run --name \"${SATELLITE_NAME}\" --uri \"tcp://0.0.0.0:10700\" --mic-command \"arecord -D '${MIC_DEVICE}' -r 16000 -c 1 -f S16_LE -t raw\" --snd-command \"aplay -D '${SND_DEVICE}' -r 22050 -c 1 -f S16_LE -t raw\"
+ExecStart=$SATELLITE_DIR/script/run --name \"${SATELLITE_NAME}\" --uri \"tcp://0.0.0.0:10700\" --mic-command \"arecord -D '${MIC_DEVICE}' -r 16000 -c 1 -f S16_LE -t raw\" --snd-command \"aplay -D '${SND_DEVICE}' -r 22050 -c 1 -f S16_LE -t raw\" --mic-auto-gain 5 --mic-noise-suppression 2
 WorkingDirectory=$SATELLITE_DIR
 Restart=always
 RestartSec=1
@@ -224,7 +224,7 @@ EOF"
   save_state $state
 fi
 
-if [ "$state" -lt "15" ]; then
+if [ "$state" -lt "15" ];then
   log_message "Step 12: Enabling and starting the openWakeWord service..."
   sudo systemctl enable wyoming-openwakeword.service
   check_error "Failed to enable openWakeWord service"
@@ -246,7 +246,7 @@ Requires=wyoming-openwakeword.service
 
 [Service]
 Type=simple
-ExecStart=$SATELLITE_DIR/script/run --name \"${SATELLITE_NAME}\" --uri \"tcp://0.0.0.0:10700\" --mic-command \"arecord -D '${MIC_DEVICE}' -r 16000 -c 1 -f S16_LE -t raw\" --snd-command \"aplay -D '${SND_DEVICE}' -r 22050 -c 1 -f S16_LE -t raw\" --wake-uri \"tcp://127.0.0.1:10400\" --wake-word-name \"${WAKE_WORD_NAME}\"
+ExecStart=$SATELLITE_DIR/script/run --name \"${SATELLITE_NAME}\" --uri \"tcp://0.0.0.0:10700\" --mic-command \"arecord -D '${MIC_DEVICE}' -r 16000 -c 1 -f S16_LE -t raw\" --snd-command \"aplay -D '${SND_DEVICE}' -r 22050 -c 1 -f S16_LE -t raw\" --wake-uri \"tcp://127.0.0.1:10400\" --wake-word-name \"${WAKE_WORD_NAME}\" --mic-auto-gain 5 --mic-noise-suppression 2
 WorkingDirectory=$SATELLITE_DIR
 Restart=always
 RestartSec=1

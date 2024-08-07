@@ -137,7 +137,7 @@ fi
 
 if [ "$state" -lt "10" ]; then
   log_message "Step 8: Creating systemd service for wyoming-satellite..."
-  sudo bash -c 'cat << EOF > /etc/systemd/system/wyoming-satellite.service
+  sudo bash -c "cat << EOF > /etc/systemd/system/wyoming-satellite.service
 [Unit]
 Description=Wyoming Satellite
 Wants=network-online.target
@@ -145,14 +145,14 @@ After=network-online.target
 
 [Service]
 Type=simple
-ExecStart='$HOME/wyoming-satellite/script/run --name "'${SATELLITE_NAME}'" --uri "tcp://0.0.0.0:10700" --mic-command "arecord -D '${MIC_DEVICE}' -r 16000 -c 1 -f S16_LE -t raw" --snd-command "aplay -D '${SND_DEVICE}' -r 22050 -c 1 -f S16_LE -t raw"
+ExecStart=$HOME/wyoming-satellite/script/run --name \"${SATELLITE_NAME}\" --uri \"tcp://0.0.0.0:10700\" --mic-command \"arecord -D '${MIC_DEVICE}' -r 16000 -c 1 -f S16_LE -t raw\" --snd-command \"aplay -D '${SND_DEVICE}' -r 22050 -c 1 -f S16_LE -t raw\"
 WorkingDirectory=$HOME/wyoming-satellite
 Restart=always
 RestartSec=1
 
 [Install]
 WantedBy=default.target
-EOF'
+EOF"
   check_error "Failed to create wyoming-satellite service"
   save_state 10
 fi
@@ -184,20 +184,20 @@ fi
 
 if [ "$state" -lt "14" ]; then
   log_message "Step 11: Creating systemd service for openWakeWord..."
-  sudo bash -c 'cat << EOF > /etc/systemd/system/wyoming-openwakeword.service
+  sudo bash -c "cat << EOF > /etc/systemd/system/wyoming-openwakeword.service
 [Unit]
 Description=Wyoming openWakeWord
 
 [Service]
 Type=simple
-ExecStart='$HOME/wyoming-openwakeword/script/run --uri "tcp://127.0.0.1:10400"
+ExecStart=$HOME/wyoming-openwakeword/script/run --uri \"tcp://127.0.0.1:10400\"
 WorkingDirectory=$HOME/wyoming-openwakeword
 Restart=always
 RestartSec=1
 
 [Install]
 WantedBy=default.target
-EOF'
+EOF"
   check_error "Failed to create openWakeWord service"
   save_state 14
 fi
@@ -214,7 +214,7 @@ fi
 
 if [ "$state" -lt "16" ]; then
   log_message "Step 13: Updating wyoming-satellite service to include wake word detection..."
-  sudo bash -c 'cat << EOF > /etc/systemd/system/wyoming-satellite.service
+  sudo bash -c "cat << EOF > /etc/systemd/system/wyoming-satellite.service
 [Unit]
 Description=Wyoming Satellite
 Wants=network-online.target
@@ -223,14 +223,14 @@ Requires=wyoming-openwakeword.service
 
 [Service]
 Type=simple
-ExecStart='$HOME/wyoming-satellite/script/run --name "'${SATELLITE_NAME}'" --uri "tcp://0.0.0.0:10700" --mic-command "arecord -D '${MIC_DEVICE}' -r 16000 -c 1 -f S16_LE -t raw" --snd-command "aplay -D '${SND_DEVICE}' -r 22050 -c 1 -f S16_LE -t raw" --wake-uri "tcp://127.0.0.1:10400" --wake-word-name "'${WAKE_WORD_NAME}'"
+ExecStart=$HOME/wyoming-satellite/script/run --name \"${SATELLITE_NAME}\" --uri \"tcp://0.0.0.0:10700\" --mic-command \"arecord -D '${MIC_DEVICE}' -r 16000 -c 1 -f S16_LE -t raw\" --snd-command \"aplay -D '${SND_DEVICE}' -r 22050 -c 1 -f S16_LE -t raw\" --wake-uri \"tcp://127.0.0.1:10400\" --wake-word-name \"${WAKE_WORD_NAME}\"
 WorkingDirectory=$HOME/wyoming-satellite
 Restart=always
 RestartSec=1
 
 [Install]
 WantedBy=default.target
-EOF'
+EOF"
   check_error "Failed to update wyoming-satellite service"
   save_state 16
 fi

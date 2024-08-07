@@ -20,6 +20,7 @@ check_error() {
 }
 
 save_state() {
+  echo "Saving state: $1 to $STATE_FILE"
   echo "$1" > "$STATE_FILE"
 }
 
@@ -32,6 +33,11 @@ load_state() {
 }
 
 state=$(load_state)
+
+if [ "$state" -eq "5" ]; then
+  log_message "Reconnecting after reboot..."
+  save_state 6  # Move to the next state after reboot
+fi
 
 if [ "$state" -lt "1" ]; then
   read -p "Enter the satellite name (e.g., my satellite): " SATELLITE_NAME
@@ -62,14 +68,14 @@ if [ "$state" -lt "2" ]; then
 fi
 
 if [ "$state" -lt "3" ]; then
-  log_message "Step 3: Cloning the wyoming-satellite repository..."
+  log_message "Step 2: Cloning the wyoming-satellite repository..."
   git clone $REPO_URL $SATELLITE_DIR
   check_error "Failed to clone the repository"
   save_state 3
 fi
 
 if [ "$state" -lt "4" ]; then
-  log_message "Step 4: Installing ReSpeaker 2Mic HAT drivers..."
+  log_message "Step 3: Installing ReSpeaker 2Mic HAT drivers..."
   cd $SATELLITE_DIR
   sudo bash etc/install-respeaker-drivers.sh
   check_error "Failed to install ReSpeaker 2Mic HAT drivers"
@@ -77,19 +83,20 @@ if [ "$state" -lt "4" ]; then
 fi
 
 if [ "$state" -lt "5" ]; then
-  log_message "Step 5: Rebooting the system to apply changes..."
+  log_message "Step 4: Rebooting the system to apply changes..."
   save_state 5
+  log_message "System will reboot in 5 seconds..."
+  sleep 5
   sudo reboot now
 fi
 
-if [ "$state" -eq "5" ]; then
+if [ "$state" -eq "6" ]; then
   log_message "Reconnecting after reboot..."
-  save_state 6  # Move to the next state after reboot
-  exit 0  # Exit the script to allow SSH reconnection
+  save_state 7  # Move to the next state after reboot
 fi
 
 if [ "$state" -lt "7" ]; then
-  log_message "Step 6: Creating and activating a Python virtual environment..."
+  log_message "Step 5: Creating and activating a Python virtual environment..."
   cd $SATELLITE_DIR
   python3 -m venv $VENV_DIR
   check_error "Failed to create Python virtual environment"
@@ -103,24 +110,22 @@ if [ "$state" -lt "7" ]; then
 fi
 
 if [ "$state" -lt "8" ]; then
-  log_message "Step 7: Testing audio devices..."
+  log_message "Step 6: Testing audio devices..."
   log_message "Listing available recording devices:"
-  arecord -L | nl -s ') '
+  arecord -L
   check_error "Failed to list audio recording devices"
-  read -p "Enter the number of the microphone device: " mic_number
-  MIC_DEVICE=$(arecord -L | sed -n "${mic_number}p" | awk '{print $1}')
+  read -p "Enter the microphone device (e.g., plughw:CARD=seeed2micvoicec,DEV=0): " MIC_DEVICE
 
   log_message "Listing available playback devices:"
-  aplay -L | nl -s ') '
+  aplay -L
   check_error "Failed to list audio playback devices"
-  read -p "Enter the number of the speaker device: " snd_number
-  SND_DEVICE=$(aplay -L | sed -n "${snd_number}p" | awk '{print $1}')
+  read -p "Enter the speaker device (e.g., plughw:CARD=seeed2micvoicec,DEV=0): " SND_DEVICE
 
   save_state 8
 fi
 
 if [ "$state" -lt "9" ]; then
-  log_message "Step 8: Testing recording and playback..."
+  log_message "Step 7: Testing recording and playback..."
   read -p "Press Enter to start recording..."
   arecord -D $MIC_DEVICE -r 16000 -c 1 -f S16_LE -t wav -d 5 test.wav
   check_error "Failed to record audio"
@@ -131,7 +136,7 @@ if [ "$state" -lt "9" ]; then
 fi
 
 if [ "$state" -lt "10" ]; then
-  log_message "Step 9: Creating systemd service for wyoming-satellite..."
+  log_message "Step 8: Creating systemd service for wyoming-satellite..."
   sudo bash -c 'cat << EOF > /etc/systemd/system/wyoming-satellite.service
 [Unit]
 Description=Wyoming Satellite
@@ -153,7 +158,7 @@ EOF'
 fi
 
 if [ "$state" -lt "11" ]; then
-  log_message "Step 10: Enabling and starting the wyoming-satellite service..."
+  log_message "Step 9: Enabling and starting the wyoming-satellite service..."
   sudo systemctl enable wyoming-satellite.service
   check_error "Failed to enable wyoming-satellite service"
 
@@ -163,7 +168,7 @@ if [ "$state" -lt "11" ]; then
 fi
 
 if [ "$state" -lt "12" ]; then
-  log_message "Step 11: Installing and configuring openWakeWord..."
+  log_message "Step 10: Installing and configuring openWakeWord..."
   cd ~
   git clone https://github.com/rhasspy/wyoming-openwakeword.git
   check_error "Failed to clone openWakeWord repository"
@@ -178,7 +183,7 @@ if [ "$state" -lt "13" ]; then
 fi
 
 if [ "$state" -lt "14" ]; then
-  log_message "Step 12: Creating systemd service for openWakeWord..."
+  log_message "Step 11: Creating systemd service for openWakeWord..."
   sudo bash -c 'cat << EOF > /etc/systemd/system/wyoming-openwakeword.service
 [Unit]
 Description=Wyoming openWakeWord
@@ -198,7 +203,7 @@ EOF'
 fi
 
 if [ "$state" -lt "15" ]; then
-  log_message "Step 13: Enabling and starting the openWakeWord service..."
+  log_message "Step 12: Enabling and starting the openWakeWord service..."
   sudo systemctl enable wyoming-openwakeword.service
   check_error "Failed to enable openWakeWord service"
 
@@ -208,7 +213,7 @@ if [ "$state" -lt "15" ]; then
 fi
 
 if [ "$state" -lt "16" ]; then
-  log_message "Step 14: Updating wyoming-satellite service to include wake word detection..."
+  log_message "Step 13: Updating wyoming-satellite service to include wake word detection..."
   sudo bash -c 'cat << EOF > /etc/systemd/system/wyoming-satellite.service
 [Unit]
 Description=Wyoming Satellite
@@ -227,10 +232,13 @@ RestartSec=1
 WantedBy=default.target
 EOF'
   check_error "Failed to update wyoming-satellite service"
-  save_state 18
+  save_state 16
 fi
 
-log_message "Step 15: Reloading systemd and restarting the wyoming-satellite service..."
+log_message "Step 14: Reloading systemd and restarting the wyoming-satellite service..."
 sudo systemctl daemon-reload
-check_error "Failed toHere is the complete script with the correct ordering, bug fixes, and a final success message at the end:
+check_error "Failed to reload systemd daemon"
+sudo systemctl restart wyoming-satellite.service
+check_error "Failed to restart wyoming-satellite service"
+
 log_message "Setup complete! Your Wyoming satellite is now running with wake word detection."

@@ -33,7 +33,6 @@ load_state() {
 
 state=$(load_state)
 
-
 if [ "$state" -lt "1" ]; then
   read -p "Enter the satellite name (e.g., my satellite): " SATELLITE_NAME
   echo "Choose the wake word (type the number):"
@@ -52,25 +51,25 @@ if [ "$state" -lt "1" ]; then
     5) WAKE_WORD_NAME="hey_rhasspy" ;;
     *) echo "Invalid selection"; exit 1 ;;
   esac
-  save_state 2
+  save_state 1
 fi
 
 if [ "$state" -lt "2" ]; then
   log_message "Step 1: Installing required packages..."
   sudo apt-get update && sudo apt-get install -y git python3-venv libopenblas-dev python3-spidev python3-gpiozero
   check_error "Failed to install required packages"
-  save_state 1
+  save_state 2
 fi
 
 if [ "$state" -lt "3" ]; then
-  log_message "Step 2: Cloning the wyoming-satellite repository..."
+  log_message "Step 3: Cloning the wyoming-satellite repository..."
   git clone $REPO_URL $SATELLITE_DIR
   check_error "Failed to clone the repository"
   save_state 3
 fi
 
 if [ "$state" -lt "4" ]; then
-  log_message "Step 3: Installing ReSpeaker 2Mic HAT drivers..."
+  log_message "Step 4: Installing ReSpeaker 2Mic HAT drivers..."
   cd $SATELLITE_DIR
   sudo bash etc/install-respeaker-drivers.sh
   check_error "Failed to install ReSpeaker 2Mic HAT drivers"
@@ -78,7 +77,7 @@ if [ "$state" -lt "4" ]; then
 fi
 
 if [ "$state" -lt "5" ]; then
-  log_message "Step 4: Rebooting the system to apply changes..."
+  log_message "Step 5: Rebooting the system to apply changes..."
   save_state 5
   sudo reboot now
 fi

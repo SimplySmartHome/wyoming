@@ -109,6 +109,7 @@ fi
 
 if [ "$state" -lt "10" ]; then
   log_message "Step 8: Testing recording and playback..."
+  read -p "Press Enter to start recording..."
   arecord -D $MIC_DEVICE -r 16000 -c 1 -f S16_LE -t wav -d 5 test.wav
   check_error "Failed to record audio"
 
@@ -224,4 +225,5 @@ if [ "$state" -lt "18" ]; then
 
   sudo systemctl restart wyoming-satellite.service
   check_error "Failed to restart wyoming-satellite service"
-  save_state 18Here is the complete script, adjusted to resume properly after reboot:
+  save_state 18
+fi

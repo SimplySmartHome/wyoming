@@ -3,7 +3,7 @@
 # Variables
 REPO_URL="https://github.com/rhasspy/wyoming-satellite.git"
 SATELLITE_DIR="$HOME/wyoming-satellite"
-VENV_DIR="${SATELLITE_DIR}/.venv"
+SATELLITE_SERVICE="/etc/systemd/system/wyoming-satellite.service"
 STATE_FILE="$HOME/setup_state.txt"
 
 log_message() {
@@ -48,7 +48,7 @@ if [ "$state" -eq 5 ]; then
 fi
 
 if [ "$state" -lt 1 ]; then
-  read -p "Enter the satellite name (e.g., my satellite): " SATELLITE_NAME
+  read -p "Enter the satellite name (e.g., my_satellite): " SATELLITE_NAME
   echo "Choose the wake word (type the number):"
   echo "1) ok_nabu"
   echo "2) hey_jarvis"
@@ -85,7 +85,7 @@ if [ "$state" -lt 3 ]; then
   save_state $state
 fi
 
-if [ "$state" -lt 4]; then
+if [ "$state" -lt 4 ]; then
   log_message "Step 3: Installing ReSpeaker 2Mic HAT drivers..."
   cd $SATELLITE_DIR
   sudo bash etc/install-respeaker-drivers.sh
@@ -141,20 +141,8 @@ if [ "$state" -lt 8 ]; then
 fi
 
 if [ "$state" -lt 9 ]; then
-  log_message "Step 7: Testing recording and playback..."
-  read -p "Press Enter to start recording..."
-  arecord -D $MIC_DEVICE -r 16000 -c 1 -f S16_LE -t wav -d 5 test.wav
-  check_error "Failed to record audio"
-
-  aplay -D $SND_DEVICE test.wav
-  check_error "Failed to play back audio"
-  state=9
-  save_state $state
-fi
-
-if [ "$state" -lt 10 ]; then
-  log_message "Step 8: Creating systemd service for wyoming-satellite..."
-  sudo bash -c "cat << EOF > /etc/systemd/system/wyoming-satellite.service
+  log_message "Step 7: Creating wyoming-satellite.service..."
+  sudo bash -c "cat << EOF > $SATELLITE_SERVICE
 [Unit]
 Description=Wyoming Satellite
 Wants=network-online.target
@@ -170,133 +158,18 @@ RestartSec=1
 [Install]
 WantedBy=default.target
 EOF"
-  check_error "Failed to create wyoming-satellite service"
-  state=10
+  check_error "Failed to create wyoming-satellite service file"
+  state=9
   save_state $state
 fi
 
-if [ "$state" -lt 11 ]; then
-  log_message "Step 9: Enabling and starting the wyoming-satellite service..."
+if [ "$state" -lt 10 ]; then
+  log_message "Step 8: Enabling wyoming-satellite.service..."
   sudo systemctl enable wyoming-satellite.service
   check_error "Failed to enable wyoming-satellite service"
 
-  sudo systemctl start wyoming-satellite.service
-  check_error "Failed to start wyoming-satellite service"
-  state=11
-  save_state $state
+  log_message "Checking wyoming-satellite service logs..."
+  sudo journalctl -u wyoming-satellite.service -f
 fi
 
-if [ "$state" -lt 12 ]; then
-  log_message "Step 10: Installing and configuring openWakeWord..."
-  cd ~
-  git clone https://github.com/rhasspy/wyoming-openwakeword.git
-  check_error "Failed to clone openWakeWord repository"
-  state=12
-  save_state $state
-fi
-
-if [ "$state" -lt 13 ]; then
-  cd wyoming-openwakeword
-  script/setup
-  check_error "Failed to set up openWakeWord"
-  state=13
-  save_state $state
-fi
-
-if [ "$state" -lt 14 ]; then
-  log_message "Step 11: Creating systemd service for openWakeWord..."
-  sudo bash -c "cat << EOF > /etc/systemd/system/wyoming-openwakeword.service
-[Unit]
-Description=Wyoming openWakeWord
-
-[Service]
-Type=simple
-ExecStart=$HOME/wyoming-openwakeword/script/run --uri \"tcp://127.0.0.1:10400\"
-WorkingDirectory=$HOME/wyoming-openwakeword
-Restart=always
-RestartSec=1
-
-[Install]
-WantedBy=default.target
-EOF"
-  check_error "Failed to create openWakeWord service"
-  state=14
-  save_state $state
-fi
-
-if [ "$state" -lt 15 ]; then
-  log_message "Step 12: Enabling and starting the openWakeWord service..."
-  sudo systemctl enable wyoming-openwakeword.service
-  check_error "Failed to enable openWakeWord service"
-
-  sudo systemctl start wyoming-openwakeword.service
-  check_error "Failed to start openWakeWord service"
-  state=15
-  save_state $state
-fi
-
-if [ "$state" -lt 16 ]; then
-  log_message "Step 13: Updating wyoming-satellite service to include wake word detection..."
-  sudo bash -c "cat << EOF > /etc/systemd/system/wyoming-satellite.service
-[Unit]
-Description=Wyoming Satellite
-Wants=network-online.target
-After=network-online.target
-Requires=wyoming-openwakeword.service
-
-[Service]
-Type=simple
-ExecStart=$SATELLITE_DIR/script/run --name \"${SATELLITE_NAME}\" --uri \"tcp://0.0.0.0:10700\" --mic-command \"arecord -D '${MIC_DEVICE}' -r 16000 -c 1 -f S16_LE -t raw\" --snd-command \"aplay -D '${SND_DEVICE}' -r 22050 -c 1 -f S16_LE -t raw\" --wake-uri \"tcp://127.0.0.1:10400\" --wake-word-name \"${WAKE_WORD_NAME}\" --mic-auto-gain 5 --mic-noise-suppression 2
-WorkingDirectory=$SATELLITE_DIR
-Restart=always
-RestartSec=1
-
-[Install]
-WantedBy=default.target
-EOF"
-  check_error "Failed to update wyoming-satellite service"
-  state=16
-  save_state $state
-fi
-
-if [ "$state" -lt 17 ]; then
-  log_message "Step 14: Creating LED service..."
-  sudo bash -c "cat << EOF > /etc/systemd/system/wyoming-led.service
-[Unit]
-Description=LED control for Wyoming Satellite
-Wants=network-online.target
-After=network-online.target
-
-[Service]
-Type=simple
-ExecStart=$SATELLITE_DIR/script/led
-WorkingDirectory=$SATELLITE_DIR
-Restart=always
-RestartSec=1
-
-[Install]
-WantedBy=default.target
-EOF"
-  check_error "Failed to create LED service"
-  state=17
-  save_state $state
-fi
-
-if [ "$state" -lt 18 ]; then
-  log_message "Step 15: Enabling and starting the LED service..."
-  sudo systemctl enable wyoming-led.service
-  check_error "Failed to enable LED service"
-
-  sudo systemctl start wyoming-led.service
-  check_error "Failed to start LED service"
-  state=18
-  save_state $state
-fi
-
-log_message "Step 16: Reloading systemd and restarting the wyoming-satellite service..."
-sudo systemctl daemon-reload
-check_error "Failed to reload systemd daemon"
-sudo systemctl restart wyoming-satellite.service
-check_error "Failed to restart wyoming-satellite service"
-
-log_message "Setup complete! Your Wyoming satellite is now running with wake word detection and LED control."
+log_message "Setup complete! Your Wyoming satellite is now running."

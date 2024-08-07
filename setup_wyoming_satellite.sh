@@ -224,7 +224,7 @@ EOF"
   save_state $state
 fi
 
-if [ "$state" -lt "15" ];then
+if [ "$state" -lt "15" ]; then
   log_message "Step 12: Enabling and starting the openWakeWord service..."
   sudo systemctl enable wyoming-openwakeword.service
   check_error "Failed to enable openWakeWord service"
@@ -259,10 +259,44 @@ EOF"
   save_state $state
 fi
 
-log_message "Step 14: Reloading systemd and restarting the wyoming-satellite service..."
+if [ "$state" -lt "17" ]; then
+  log_message "Step 14: Creating LED service..."
+  sudo bash -c "cat << EOF > /etc/systemd/system/wyoming-led.service
+[Unit]
+Description=LED control for Wyoming Satellite
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=$SATELLITE_DIR/script/led
+WorkingDirectory=$SATELLITE_DIR
+Restart=always
+RestartSec=1
+
+[Install]
+WantedBy=default.target
+EOF"
+  check_error "Failed to create LED service"
+  state=17
+  save_state $state
+fi
+
+if [ "$state" -lt "18" ]; then
+  log_message "Step 15: Enabling and starting the LED service..."
+  sudo systemctl enable wyoming-led.service
+  check_error "Failed to enable LED service"
+
+  sudo systemctl start wyoming-led.service
+  check_error "Failed to start LED service"
+  state=18
+  save_state $state
+fi
+
+log_message "Step 16: Reloading systemd and restarting the wyoming-satellite service..."
 sudo systemctl daemon-reload
 check_error "Failed to reload systemd daemon"
 sudo systemctl restart wyoming-satellite.service
 check_error "Failed to restart wyoming-satellite service"
 
-log_message "Setup complete! Your Wyoming satellite is now running with wake word detection."
+log_message "Setup complete! Your Wyoming satellite is now running with wake word detection and LED control."

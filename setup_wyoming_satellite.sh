@@ -33,14 +33,8 @@ load_state() {
 
 state=$(load_state)
 
-if [ "$state" -lt "1" ]; then
-  log_message "Step 1: Installing required packages..."
-  sudo apt-get update && sudo apt-get install -y git python3-venv libopenblas-dev python3-spidev python3-gpiozero
-  check_error "Failed to install required packages"
-  save_state 1
-fi
 
-if [ "$state" -lt "2" ]; then
+if [ "$state" -lt "1" ]; then
   read -p "Enter the satellite name (e.g., my satellite): " SATELLITE_NAME
   echo "Choose the wake word (type the number):"
   echo "1) ok_nabu"
@@ -59,6 +53,13 @@ if [ "$state" -lt "2" ]; then
     *) echo "Invalid selection"; exit 1 ;;
   esac
   save_state 2
+fi
+
+if [ "$state" -lt "2" ]; then
+  log_message "Step 1: Installing required packages..."
+  sudo apt-get update && sudo apt-get install -y git python3-venv libopenblas-dev python3-spidev python3-gpiozero
+  check_error "Failed to install required packages"
+  save_state 1
 fi
 
 if [ "$state" -lt "3" ]; then

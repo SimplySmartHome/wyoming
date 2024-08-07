@@ -23,23 +23,15 @@ save_state() {
   echo "$1" > "$STATE_FILE"
 }
 
-load_state() {
-  if [ -f "$STATE_FILE" ]; then
-    cat "$STATE_FILE"
-  else
-    echo "0"
-  fi
-}
-
 save_variables() {
-  echo "state=$1" > "$STATE_FILE"
+  echo "state=${state}" > "$STATE_FILE"
   echo "SATELLITE_NAME=${SATELLITE_NAME}" >> "$STATE_FILE"
   echo "WAKE_WORD_NAME=${WAKE_WORD_NAME}" >> "$STATE_FILE"
   echo "MIC_DEVICE=${MIC_DEVICE}" >> "$STATE_FILE"
   echo "SND_DEVICE=${SND_DEVICE}" >> "$STATE_FILE"
 }
 
-load_variables() {
+load_state() {
   if [ -f "$STATE_FILE" ]; then
     source "$STATE_FILE"
   else
@@ -47,11 +39,12 @@ load_variables() {
   fi
 }
 
-load_variables
+load_state
 
 if [ "$state" -eq "5" ]; then
   log_message "Reconnecting after reboot..."
-  save_variables 6  # Move to the next state after reboot
+  state=6  # Move to the next state after reboot
+  save_state $state
 fi
 
 if [ "$state" -lt "1" ]; then
@@ -72,21 +65,24 @@ if [ "$state" -lt "1" ]; then
     5) WAKE_WORD_NAME="hey_rhasspy" ;;
     *) echo "Invalid selection"; exit 1 ;;
   esac
-  save_variables 1
+  state=1
+  save_variables
 fi
 
 if [ "$state" -lt "2" ]; then
   log_message "Step 1: Installing required packages..."
   sudo apt-get update && sudo apt-get install -y git python3-venv libopenblas-dev python3-spidev python3-gpiozero
   check_error "Failed to install required packages"
-  save_variables 2
+  state=2
+  save_state $state
 fi
 
 if [ "$state" -lt "3" ]; then
   log_message "Step 2: Cloning the wyoming-satellite repository..."
   git clone $REPO_URL $SATELLITE_DIR
   check_error "Failed to clone the repository"
-  save_variables 3
+  state=3
+  save_state $state
 fi
 
 if [ "$state" -lt "4" ]; then
@@ -94,12 +90,14 @@ if [ "$state" -lt "4" ]; then
   cd $SATELLITE_DIR
   sudo bash etc/install-respeaker-drivers.sh
   check_error "Failed to install ReSpeaker 2Mic HAT drivers"
-  save_variables 4
+  state=4
+  save_state $state
 fi
 
 if [ "$state" -lt "5" ]; then
   log_message "Step 4: Rebooting the system to apply changes..."
-  save_variables 5
+  state=5
+  save_state $state
   log_message "System will reboot in 5 seconds..."
   sleep 5
   sudo reboot now
@@ -107,7 +105,8 @@ fi
 
 if [ "$state" -eq "6" ]; then
   log_message "Reconnecting after reboot..."
-  save_variables 7  # Move to the next state after reboot
+  state=7  # Move to the next state after reboot
+  save_state $state
 fi
 
 if [ "$state" -lt "7" ]; then
@@ -121,7 +120,8 @@ if [ "$state" -lt "7" ]; then
 
   $VENV_DIR/bin/pip install -f 'https://synesthesiam.github.io/prebuilt-apps/' -r requirements.txt -r requirements_audio_enhancement.txt -r requirements_vad.txt
   check_error "Failed to install Python dependencies"
-  save_variables 7
+  state=7
+  save_state $state
 fi
 
 if [ "$state" -lt "8" ]; then
@@ -136,7 +136,8 @@ if [ "$state" -lt "8" ]; then
   check_error "Failed to list audio playback devices"
   read -p "Enter the speaker device (e.g., plughw:CARD=seeed2micvoicec,DEV=0): " SND_DEVICE
 
-  save_variables 8
+  state=8
+  save_variables
 fi
 
 if [ "$state" -lt "9" ]; then
@@ -147,7 +148,8 @@ if [ "$state" -lt "9" ]; then
 
   aplay -D $SND_DEVICE test.wav
   check_error "Failed to play back audio"
-  save_variables 9
+  state=9
+  save_state $state
 fi
 
 if [ "$state" -lt "10" ]; then
@@ -169,7 +171,8 @@ RestartSec=1
 WantedBy=default.target
 EOF"
   check_error "Failed to create wyoming-satellite service"
-  save_variables 10
+  state=10
+  save_state $state
 fi
 
 if [ "$state" -lt "11" ]; then
@@ -179,7 +182,8 @@ if [ "$state" -lt "11" ]; then
 
   sudo systemctl start wyoming-satellite.service
   check_error "Failed to start wyoming-satellite service"
-  save_variables 11
+  state=11
+  save_state $state
 fi
 
 if [ "$state" -lt "12" ]; then
@@ -187,14 +191,16 @@ if [ "$state" -lt "12" ]; then
   cd ~
   git clone https://github.com/rhasspy/wyoming-openwakeword.git
   check_error "Failed to clone openWakeWord repository"
-  save_variables 12
+  state=12
+  save_state $state
 fi
 
 if [ "$state" -lt "13" ]; then
   cd wyoming-openwakeword
   script/setup
   check_error "Failed to set up openWakeWord"
-  save_variables 13
+  state=13
+  save_state $state
 fi
 
 if [ "$state" -lt "14" ]; then
@@ -214,7 +220,8 @@ RestartSec=1
 WantedBy=default.target
 EOF"
   check_error "Failed to create openWakeWord service"
-  save_variables 14
+  state=14
+  save_state $state
 fi
 
 if [ "$state" -lt "15" ]; then
@@ -224,7 +231,8 @@ if [ "$state" -lt "15" ]; then
 
   sudo systemctl start wyoming-openwakeword.service
   check_error "Failed to start openWakeWord service"
-  save_variables 15
+  state=15
+  save_state $state
 fi
 
 if [ "$state" -lt "16" ]; then
@@ -247,7 +255,8 @@ RestartSec=1
 WantedBy=default.target
 EOF"
   check_error "Failed to update wyoming-satellite service"
-  save_variables 16
+  state=16
+  save_state $state
 fi
 
 log_message "Step 14: Reloading systemd and restarting the wyoming-satellite service..."

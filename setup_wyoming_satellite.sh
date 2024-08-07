@@ -7,14 +7,12 @@ VENV_DIR="${SATELLITE_DIR}/.venv"
 STATE_FILE="$HOME/setup_state.txt"
 
 log_message() {
-  echo "====================================================================="
-  echo "$1"
-  echo "====================================================================="
+  zenity --info --text="$1" --width=400 --height=200
 }
 
 check_error() {
   if [ $? -ne 0 ]; then
-    echo "Error: $1"
+    zenity --error --text="Error: $1" --width=400 --height=200
     exit 1
   fi
 }
@@ -34,7 +32,8 @@ load_state() {
 state=$(load_state)
 
 if [ "$state" -lt "1" ]; then
-  read -p "Enter the satellite name (e.g., my satellite): " SATELLITE_NAME
+  SATELLITE_NAME=$(zenity --entry --title="Satellite Name" --text="Enter the satellite name (e.g., my satellite):")
+  WAKE_WORD_NAME=$(zenity --list --title="Wake Word Name" --text="Choose the wake word:" --column="Wake Word" "ok_nabu" "hey_jarvis" "alexa" "hey_mycroft" "hey_rhasspy")
   save_state 1
 
   log_message "Step 1: Updating and upgrading the system..."
@@ -45,7 +44,7 @@ fi
 
 if [ "$state" -lt "3" ]; then
   log_message "Step 2: Installing required packages..."
-  sudo apt-get install --no-install-recommends -y git python3-venv libopenblas-dev python3-spidev python3-gpiozero
+  sudo apt-get install --no-install-recommends -y git python3-venv libopenblas-dev python3-spidev python3-gpiozero zenity
   check_error "Failed to install required packages"
   save_state 3
 fi
@@ -94,22 +93,25 @@ fi
 if [ "$state" -lt "9" ]; then
   log_message "Step 7: Testing audio devices..."
   log_message "Listing available recording devices:"
-  arecord -L
+  MIC_DEVICES=$(arecord -L)
   check_error "Failed to list audio recording devices"
 
-  read -p "Enter the microphone device to use (e.g., plughw:CARD=seeed2micvoicec,DEV=0): " MIC_DEVICE
+  MIC_DEVICE=$(echo "$MIC_DEVICES" | zenity --list --title="Select Microphone Device" --column="Devices" --height=400 --width=600)
+  check_error "Failed to select microphone device"
 
   log_message "Listing available playback devices:"
-  aplay -L
+  SND_DEVICES=$(aplay -L)
   check_error "Failed to list audio playback devices"
 
-  read -p "Enter the speaker device to use (e.g., plughw:CARD=seeed2micvoicec,DEV=0): " SND_DEVICE
+  SND_DEVICE=$(echo "$SND_DEVICES" | zenity --list --title="Select Speaker Device" --column="Devices" --height=400 --width=600)
+  check_error "Failed to select speaker device"
+
   save_state 9
 fi
 
 if [ "$state" -lt "10" ]; then
   log_message "Step 8: Testing recording and playback..."
-  read -p "Press Enter to start recording..."
+  zenity --info --text="Press OK to start recording..." --width=400 --height=200
   arecord -D $MIC_DEVICE -r 16000 -c 1 -f S16_LE -t wav -d 5 test.wav
   check_error "Failed to record audio"
 
@@ -128,8 +130,8 @@ After=network-online.target
 
 [Service]
 Type=simple
-ExecStart='${SATELLITE_DIR}'/script/run --name "'${SATELLITE_NAME}'" --uri "tcp://0.0.0.0:10700" --mic-command "arecord -D '${MIC_DEVICE}' -r 16000 -c 1 -f S16_LE -t raw" --snd-command "aplay -D '${SND_DEVICE}' -r 22050 -c 1 -f S16_LE -t raw"
-WorkingDirectory='${SATELLITE_DIR}'
+ExecStart='$HOME/wyoming-satellite/script/run --name "'${SATELLITE_NAME}'" --uri "tcp://0.0.0.0:10700" --mic-command "arecord -D '${MIC_DEVICE}' -r 16000 -c 1 -f S16_LE -t raw" --snd-command "aplay -D '${SND_DEVICE}' -r 22050 -c 1 -f S16_LE -t raw"
+WorkingDirectory=$HOME/wyoming-satellite
 Restart=always
 RestartSec=1
 
@@ -206,7 +208,7 @@ Requires=wyoming-openwakeword.service
 
 [Service]
 Type=simple
-ExecStart='$HOME/wyoming-satellite/script/run --name "'${SATELLITE_NAME}'" --uri "tcp://0.0.0.0:10700" --mic-command "arecord -D '${MIC_DEVICE}' -r 16000 -c 1 -f S16_LE -t raw" --snd-command "aplay -D '${SND_DEVICE}' -r 22050 -c 1 -f S16_LE -t raw" --wake-uri "tcp://127.0.0.1:10400" --wake-word-name "ok_nabu"
+ExecStart='$HOME/wyoming-satellite/script/run --name "'${SATELLITE_NAME}'" --uri "tcp://0.0.0.0:10700" --mic-command "arecord -D '${MIC_DEVICE}' -r 16000 -c 1 -f S16_LE -t raw" --snd-command "aplay -D '${SND_DEVICE}' -r 22050 -c 1 -f S16_LE -t raw" --wake-uri "tcp://127.0.0.1:10400" --wake-word-name "'${WAKE_WORD_NAME}'"
 WorkingDirectory=$HOME/wyoming-satellite
 Restart=always
 RestartSec=1
@@ -218,12 +220,7 @@ EOF'
   save_state 17
 fi
 
-if [ "$state" -lt "18" ]; then
-  log_message "Step 15: Reloading systemd and restarting the wyoming-satellite service..."
-  sudo systemctl daemon-reload
-  check_error "Failed to reload systemd"
-
-  sudo systemctl restart wyoming-satellite.service
-  check_error "Failed to restart wyoming-satellite service"
-  save_state 18
-fi
+log_message "Step 15: Reloading systemd and restarting the wyoming-satellite service..."
+sudo systemctl daemon-reload
+check_error "Failed toHere is the complete script with the correct ordering, bug fixes, and a final success message at the end:
+log_message "Setup complete! Your Wyoming satellite is now running with wake word detection."

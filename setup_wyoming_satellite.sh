@@ -32,7 +32,6 @@ load_state() {
 state=$(load_state)
 
 if [ "$state" -lt "1" ]; then
-  log_message "Step 1: Installing Zenity for GUI dialogs..."
   sudo apt-get install -y zenity
   check_error "Failed to install Zenity"
   save_state 1

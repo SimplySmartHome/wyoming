@@ -173,8 +173,8 @@ Description=Wyoming openWakeWord
 
 [Service]
 Type=simple
-ExecStart=/home/pi/wyoming-openwakeword/script/run --uri "tcp://127.0.0.1:10400"
-WorkingDirectory=/home/pi/wyoming-openwakeword
+ExecStart='$HOME/wyoming-openwakeword/script/run --uri "tcp://127.0.0.1:10400"
+WorkingDirectory=$HOME/wyoming-openwakeword
 Restart=always
 RestartSec=1
 
@@ -206,8 +206,8 @@ Requires=wyoming-openwakeword.service
 
 [Service]
 Type=simple
-ExecStart='${SATELLITE_DIR}'/script/run --name "'${SATELLITE_NAME}'" --uri "tcp://0.0.0.0:10700" --mic-command "arecord -D '${MIC_DEVICE}' -r 16000 -c 1 -f S16_LE -t raw" --snd-command "aplay -D '${SND_DEVICE}' -r 22050 -c 1 -f S16_LE -t raw" --wake-uri "tcp://127.0.0.1:10400" --wake-word-name "ok_nabu"
-WorkingDirectory='${SATELLITE_DIR}'
+ExecStart='$HOME/wyoming-satellite/script/run --name "'${SATELLITE_NAME}'" --uri "tcp://0.0.0.0:10700" --mic-command "arecord -D '${MIC_DEVICE}' -r 16000 -c 1 -f S16_LE -t raw" --snd-command "aplay -D '${SND_DEVICE}' -r 22050 -c 1 -f S16_LE -t raw" --wake-uri "tcp://127.0.0.1:10400" --wake-word-name "ok_nabu"
+WorkingDirectory=$HOME/wyoming-satellite
 Restart=always
 RestartSec=1
 

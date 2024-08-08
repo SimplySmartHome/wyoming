@@ -37,36 +37,8 @@ load_state() {
   fi
 }
 
-initialize_variables() {
-  if [ -z "$SATELLITE_NAME" ]; then
-    read -p "Enter the satellite name (e.g., my satellite): " SATELLITE_NAME
-  fi
-
-  if [ -z "$WAKE_WORD_NAME" ]; then
-    echo "Choose the wake word (type the number):"
-    echo "1) ok_nabu"
-    echo "2) hey_jarvis"
-    echo "3) alexa"
-    echo "4) hey_mycroft"
-    echo "5) hey_rhasspy"
-    read -p "Selection: " wake_word_choice
-
-    case $wake_word_choice in
-      1) WAKE_WORD_NAME="ok_nabu" ;;
-      2) WAKE_WORD_NAME="hey_jarvis" ;;
-      3) WAKE_WORD_NAME="alexa" ;;
-      4) WAKE_WORD_NAME="hey_mycroft" ;;
-      5) WAKE_WORD_NAME="hey_rhasspy" ;;
-      *) echo "Invalid selection"; exit 1 ;;
-    esac
-  fi
-}
-
 # Load the current state
 load_state
-
-# Initialize variables if not already set
-initialize_variables
 
 if [ "$state" -eq "0" ]; then
   state=1
@@ -135,6 +107,25 @@ if [ "$state" -eq "7" ]; then
   aplay -L
   check_error "Failed to list audio playback devices"
   read -p "Enter the speaker device (e.g., plughw:CARD=seeed2micvoicec,DEV=0): " SND_DEVICE
+
+  read -p "Enter the satellite name (e.g., my satellite): " SATELLITE_NAME
+
+  echo "Choose the wake word (type the number):"
+  echo "1) ok_nabu"
+  echo "2) hey_jarvis"
+  echo "3) alexa"
+  echo "4) hey_mycroft"
+  echo "5) hey_rhasspy"
+  read -p "Selection: " wake_word_choice
+
+  case $wake_word_choice in
+    1) WAKE_WORD_NAME="ok_nabu" ;;
+    2) WAKE_WORD_NAME="hey_jarvis" ;;
+    3) WAKE_WORD_NAME="alexa" ;;
+    4) WAKE_WORD_NAME="hey_mycroft" ;;
+    5) WAKE_WORD_NAME="hey_rhasspy" ;;
+    *) echo "Invalid selection"; exit 1 ;;
+  esac
 
   save_variables
   state=8

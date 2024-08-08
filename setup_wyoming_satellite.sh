@@ -22,13 +22,6 @@ save_state() {
   echo "state=${state}" > "$STATE_FILE"
 }
 
-save_variables() {
-  echo "SATELLITE_NAME=\"${SATELLITE_NAME}\"" >> "$STATE_FILE"
-  echo "WAKE_WORD_NAME=\"${WAKE_WORD_NAME}\"" >> "$STATE_FILE"
-  echo "MIC_DEVICE=\"${MIC_DEVICE}\"" >> "$STATE_FILE"
-  echo "SND_DEVICE=\"${SND_DEVICE}\"" >> "$STATE_FILE"
-}
-
 load_state() {
   if [ -f "$STATE_FILE" ]; then
     source "$STATE_FILE"
@@ -110,24 +103,6 @@ if [ "$state" -eq "7" ]; then
 
   read -p "Enter the satellite name (e.g., my satellite): " SATELLITE_NAME
 
-  echo "Choose the wake word (type the number):"
-  echo "1) ok_nabu"
-  echo "2) hey_jarvis"
-  echo "3) alexa"
-  echo "4) hey_mycroft"
-  echo "5) hey_rhasspy"
-  read -p "Selection: " wake_word_choice
-
-  case $wake_word_choice in
-    1) WAKE_WORD_NAME="ok_nabu" ;;
-    2) WAKE_WORD_NAME="hey_jarvis" ;;
-    3) WAKE_WORD_NAME="alexa" ;;
-    4) WAKE_WORD_NAME="hey_mycroft" ;;
-    5) WAKE_WORD_NAME="hey_rhasspy" ;;
-    *) echo "Invalid selection"; exit 1 ;;
-  esac
-
-  save_variables
   state=8
   save_state
 fi
@@ -154,7 +129,7 @@ After=network-online.target
 
 [Service]
 Type=simple
-ExecStart=$SATELLITE_DIR/script/run --name \"${SATELLITE_NAME}\" --uri \"tcp://0.0.0.0:10700\" --mic-command \"arecord -D '${MIC_DEVICE}' -r 16000 -c 1 -f S16_LE -t raw\" --snd-command \"aplay -D '${SND_DEVICE}' -r 22050 -c 1 -f S16_LE -t raw\"
+ExecStart=$SATELLITE_DIR/script/run --name '${SATELLITE_NAME}' --uri 'tcp://0.0.0.0:10700' --mic-command 'arecord -D \"${MIC_DEVICE}\" -r 16000 -c 1 -f S16_LE -t raw' --snd-command 'aplay -D \"${SND_DEVICE}\" -r 22050 -c 1 -f S16_LE -t raw'
 WorkingDirectory=$SATELLITE_DIR
 Restart=always
 RestartSec=1

@@ -19,6 +19,7 @@ check_error() {
 }
 
 save_state() {
+  sed -i '/^state=/d' "$STATE_FILE" 2>/dev/null
   echo "$1" > "$STATE_FILE"
 }
 

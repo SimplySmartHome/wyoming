@@ -19,24 +19,19 @@ check_error() {
 }
 
 save_state() {
-  sed -i '/^state=/d' "$STATE_FILE"
-  echo "state=${state}" >> "$STATE_FILE"
+  echo "state=${state}" > "$STATE_FILE"
 }
 
 save_variables() {
-  if ! grep -q "^SATELLITE_NAME=" "$STATE_FILE"; then
-    echo "SATELLITE_NAME=\"${SATELLITE_NAME}\"" >> "$STATE_FILE"
-    echo "WAKE_WORD_NAME=\"${WAKE_WORD_NAME}\"" >> "$STATE_FILE"
-    echo "MIC_DEVICE=\"${MIC_DEVICE}\"" >> "$STATE_FILE"
-    echo "SND_DEVICE=\"${SND_DEVICE}\"" >> "$STATE_FILE"
-  fi
+  echo "SATELLITE_NAME=\"${SATELLITE_NAME}\"" >> "$STATE_FILE"
+  echo "WAKE_WORD_NAME=\"${WAKE_WORD_NAME}\"" >> "$STATE_FILE"
+  echo "MIC_DEVICE=\"${MIC_DEVICE}\"" >> "$STATE_FILE"
+  echo "SND_DEVICE=\"${SND_DEVICE}\"" >> "$STATE_FILE"
 }
 
 load_state() {
   if [ -f "$STATE_FILE" ]; then
-    while IFS= read -r line; do
-      eval "$line"
-    done < "$STATE_FILE"
+    source "$STATE_FILE"
   else
     state="0"
   fi
@@ -75,7 +70,6 @@ initialize_variables
 
 if [ "$state" -eq "0" ]; then
   state=1
-  save_variables
   save_state
 fi
 
@@ -142,8 +136,8 @@ if [ "$state" -eq "7" ]; then
   check_error "Failed to list audio playback devices"
   read -p "Enter the speaker device (e.g., plughw:CARD=seeed2micvoicec,DEV=0): " SND_DEVICE
 
-  state=8
   save_variables
+  state=8
   save_state
 fi
 

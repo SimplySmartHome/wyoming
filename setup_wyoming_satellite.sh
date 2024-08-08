@@ -134,17 +134,7 @@ After=network-online.target
 
 [Service]
 Type=simple
-ExecStart=$SATELLITE_DIR/script/run \
-  --name '${SATELLITE_NAME}' \
-  --uri 'tcp://0.0.0.0:10700' \
-  --mic-command 'arecord -D \"${MIC_DEVICE}\" -r 16000 -c 1 -f S16_LE -t raw' \
-  --snd-command 'aplay -D \"${SND_DEVICE}\" -r 16000 -c 1 -f S16_LE -t raw' \
-  --snd-command-rate 16000 \
-  --snd-volume-multiplier 0.1 \
-  --awake-wav sounds/awake.wav \
-  --done-wav sounds/done.wav \
-  --mic-auto-gain 5 \
-  --mic-noise-suppression 2
+ExecStart=$SATELLITE_DIR/script/run --name '${SATELLITE_NAME}' --uri 'tcp://0.0.0.0:10700' --mic-command 'arecord -D \"${MIC_DEVICE}\" -r 16000 -c 1 -f S16_LE -t raw' --snd-command 'aplay -D \"${SND_DEVICE}\" -r 16000 -c 1 -f S16_LE -t raw' --snd-command-rate 16000 --snd-volume-multiplier 0.1 --awake-wav sounds/awake.wav --done-wav sounds/done.wav --mic-auto-gain 5 --mic-noise-suppression 2
 WorkingDirectory=$SATELLITE_DIR
 Restart=always
 RestartSec=1

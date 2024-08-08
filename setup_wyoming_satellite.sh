@@ -80,9 +80,14 @@ fi
 if [ "$state" -eq "6" ]; then
   log_message "Step 5: Setting up Python virtual environment and installing dependencies..."
   cd $SATELLITE_DIR
-  python3 -m venv .venv && \
-  .venv/bin/pip3 install --upgrade pip wheel setuptools && \
-  .venv/bin/pip3 install -f 'https://synesthesiam.github.io/prebuilt-apps/' -r requirements.txt -r requirements_audio_enhancement.txt -r requirements_vad.txt
+  python3 -m venv .venv
+  .venv/bin/pip3 install --upgrade pip
+  .venv/bin/pip3 install --upgrade wheel setuptools
+  .venv/bin/pip3 install \
+  -f 'https://synesthesiam.github.io/prebuilt-apps/' \
+  -r requirements.txt \
+  -r requirements_audio_enhancement.txt \
+  -r requirements_vad.txt
   check_error "Failed to set up Python virtual environment and install dependencies"
   
   state=7

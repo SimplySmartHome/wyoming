@@ -25,16 +25,18 @@ save_state() {
 
 save_variables() {
   if ! grep -q "^SATELLITE_NAME=" "$STATE_FILE"; then
-    echo "SATELLITE_NAME=${SATELLITE_NAME}" >> "$STATE_FILE"
-    echo "WAKE_WORD_NAME=${WAKE_WORD_NAME}" >> "$STATE_FILE"
-    echo "MIC_DEVICE=${MIC_DEVICE}" >> "$STATE_FILE"
-    echo "SND_DEVICE=${SND_DEVICE}" >> "$STATE_FILE"
+    echo "SATELLITE_NAME=\"${SATELLITE_NAME}\"" >> "$STATE_FILE"
+    echo "WAKE_WORD_NAME=\"${WAKE_WORD_NAME}\"" >> "$STATE_FILE"
+    echo "MIC_DEVICE=\"${MIC_DEVICE}\"" >> "$STATE_FILE"
+    echo "SND_DEVICE=\"${SND_DEVICE}\"" >> "$STATE_FILE"
   fi
 }
 
 load_state() {
   if [ -f "$STATE_FILE" ]; then
-    source "$STATE_FILE"
+    while IFS= read -r line; do
+      eval "$line"
+    done < "$STATE_FILE"
   else
     state="0"
   fi
@@ -117,19 +119,13 @@ if [ "$state" -eq "5" ]; then
 fi
 
 if [ "$state" -eq "6" ]; then
-  log_message "Step 5: Creating and activating a Python virtual environment..."
+  log_message "Step 5: Setting up Python virtual environment and installing dependencies..."
   cd $SATELLITE_DIR
-  python3 -m venv .venv
-  check_error "Failed to create Python virtual environment"
-
-  .venv/bin/pip3 install --upgrade pip
-  check_error "Failed to upgrade pip"
-
-  .venv/bin/pip3 install --upgrade wheel setuptools
-  check_error "Failed to upgrade wheel and setuptools"
-
+  python3 -m venv .venv && \
+  .venv/bin/pip3 install --upgrade pip wheel setuptools && \
   .venv/bin/pip3 install -f 'https://synesthesiam.github.io/prebuilt-apps/' -r requirements.txt -r requirements_audio_enhancement.txt -r requirements_vad.txt
-  check_error "Failed to install Python dependencies"
+  check_error "Failed to set up Python virtual environment and install dependencies"
+  
   state=7
   save_state
 fi
